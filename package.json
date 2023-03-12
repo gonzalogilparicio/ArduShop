@@ -1,0 +1,19 @@
+{
+  "name": "ardushop",
+  "version": "1.0.0",
+  "description": "Venta de componentes para Arduino",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gonzalogilparicio/ArduShop.git"
+  },
+  "author": "Gonzalo Gil Paricio",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gonzalogilparicio/ArduShop/issues"
+  },
+  "homepage": "https://github.com/gonzalogilparicio/ArduShop#readme"
+}
