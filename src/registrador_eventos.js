@@ -1,24 +1,28 @@
 class ProductManager {
+
+    #id
+    #products
+
     constructor() {
-        this.id = 1;
-        this.products = [];
+        this.#id = 1;
+        this.#products = [];
     }
 
     addProduct({ title, description, price, img, code, stock }) {
-        constructor();
+
         const siExiste = this.siExiste('code', code);
 
         if (siExiste) {
-            console.error(`El codigo: ${code} ingresado ya existe`);
+            return `El codigo: ${code} ingresado ya existe`
         };
 
-        if (title.length === 0 || description.length === 0 || price.length === 0 || img.length === 0 || code.length === 0 || stock.length === 0) {
-            console.error('Todos las propiedades deben tener algun valor');
+        if (!title || !description || !price || !img || !code || !stock) {
+            return 'Todos las propiedades son obligatorias'
         };
 
         if (!siExiste) {
-            this.products.push({
-                id: this.id++,
+            this.#products.push({
+                id: this.#id++,
                 title,
                 description,
                 price,
@@ -26,25 +30,26 @@ class ProductManager {
                 code,
                 stock
             })
+            return "El producto fue añadido correctamente"
         };
     }
 
     getProducts() {
-        return this.products;
+        return this.#products;
     }
 
     getProductById(id) {
-        const product = this.products.find(product => product.id === id);
+        const product = this.#products.find(product => product.id === id);
 
         if (!product) {
-            console.error(`El ID: ${id} no existe`);
+            return `El ID: ${id} no existe`
         };
 
         return product;
     }
 
     siExiste(key, value) {
-        return this.products.find(product => product[key] === value)
+        return this.#products.find(product => product[key] === value)
     };
 }
 
@@ -59,8 +64,8 @@ const item = {
 
 const product = new ProductManager();
 console.log(product.getProducts());
-product.addProduct(item);
+console.log(product.addProduct(item));
 console.log(product.getProducts());
-product.addProduct(item);
+console.log(product.addProduct(item));
 console.log(product.getProductById(1));
 console.log(product.getProductById(2));
