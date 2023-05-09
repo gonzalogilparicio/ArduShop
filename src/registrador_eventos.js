@@ -1,181 +1,105 @@
-const fs = require('fs').promises;
-
-class ProductManager {
-
-  #nextId
-  #products
-
-  constructor() {
-    this.#nextId = 1;
-    this.#products = [];
-    this.path = './products.json'
+import fs from "fs";
+export default class ProductManager {
+  constructor(fileName) {
+    this.fileName = fileName;
+    this.products = [];
+    this.loadProducts();
   }
 
-  async addProduct({ title, description, price, thumbnail, code, stock }) {
+  loadProducts() {
     try {
-      if (!title || !description || !price || !thumbnail || !code || !stock) throw new Error('Todos los campos son obligatorios');
-
-      const isExist = this.getProductExists('code', code);
-      if (isExist) throw new Error(`El codigo: ${code} ingresado ya existe`);
-
-      this.#products.push({
-        id: this.#nextId++,
-        title,
-        description,
-        price,
-        thumbnail,
-        code,
-        stock
-      });
-
-      await fs.writeFile(this.path, JSON.stringify(this.#products));
-
-      return `Producto creado con exito`;
-
-    } catch (error) {
-      return error;
-    }
-  }
-
-  async getLastId() {
-    try {
-      let lastId = this.#nextId;
-      const data = await this.getProducts();
-      for (let i = 0; i < data.length; i++) {
-        if (data[i].id > lastId) {
-          lastId = data[i].id
-        }
+      const data = fs.readFileSync(this.fileName, "utf-8");
+      if (data) {
+        this.products = JSON.parse(data);
       }
-      return lastId + 1;
-
-    } catch (error) {
-      return error;
+    } catch (err) {
+      console.log(`Error al leer el archivo: ${err.message}`);
     }
+  }
+
+  saveProducts() {
+    try {
+      fs.writeFileSync(this.fileName, JSON.stringify(this.products), "utf-8");
+    } catch (err) {
+      console.log(`Error al escribir archivo: ${err.message}`);
+    }
+  }
+
+  addProduct(product) {
+    // Validar que todos los campos sean obligatorios
+    if (
+      !product.title ||
+      !product.description ||
+      !product.price ||
+      !product.thumbnail ||
+      !product.code ||
+      !product.stock
+    ) {
+      console.log("Todos los campos son obligatorios");
+      return;
+    }
+
+    // Validar que no se repita el código
+    const codeAlreadyExists = this.products.some(
+      (prod) => prod.code === product.code
+    );
+
+    if (codeAlreadyExists) {
+      console.log(`Ya existe un producto con el código ${product.code}`);
+      return;
+    }
+
+    // Agregar el producto al arreglo con un id autoincrementable
+    const newProduct = {
+      ...product,
+      id: this.products.length + 1,
+    };
+
+    this.products.push(newProduct);
+    this.saveProducts();
+    console.log(`Producto ${newProduct.id} - ${newProduct.title} agregado`);
   }
 
   async getProducts() {
-    // return this.#products;
-    try {
-      const data = await fs.readFile(this.path, { encoding: 'utf-8' });
-      return JSON.parse(data)
-
-    } catch (error) {
-      return error;
-    }
+    return this.products;
   }
 
-  getProductById(id) {
-    try {
-      const product = this.#products.find(product => product.id === id);
-
-      if (!product) throw new Error("Not Found");
-
+  async getProductById(id) {
+    const product = this.products.find((product) => product.id === id);
+    if (product) {
       return product;
-
-    } catch (error) {
-      return error;
-    }
+    } 
   }
 
-  async updateProductById(obj) {
-    try {
-      this.#products = this.#products.map(item => item.id === obj.id ? { ...item, ...obj } : item)
-      await fs.writeFile(this.path, JSON.stringify(this.#products));
-      return `Producto ID: ${obj.id} actualizado con exito`;
-
-    } catch (error) {
-      return error;
+  updateProduct(id, updatedProduct) {
+    const productIndex = this.products.findIndex(
+      (product) => product.id === id
+    );
+    if (productIndex === -1) {
+      console.log(`Producto ${id} no encontrado`);
+      return;
     }
 
+    this.products[productIndex] = {
+      ...updatedProduct,
+      id,
+    };
+
+    this.saveProducts();
+    console.log(`Producto ${id} actualizado`);
   }
 
-  async deleteProductById(id) {
-    try {
-      const isExist = this.getProductExists('id', id);
-      if (!isExist) throw new Error(`No se encontro el id: ${id} para eliminar.`);
-
-      this.#products = this.#products.filter(product => product.id !== id);
-      await fs.writeFile(this.path, JSON.stringify(this.#products));
-      return `Producto ID: ${id} eliminado con exito`;
-
-    } catch (error) {
-      return error;
+  deleteProduct(id) {
+    const productIndex = this.products.findIndex(
+      (product) => product.id === id
+    );
+    if (productIndex === -1) {
+      console.log(`Producto ${id} no encontrado`);
+      return;
     }
-  }
 
-  getProductExists(key, value) {
-    return this.#products.find(product => product[key] === value);
-  }
-
-  async createFile() {
-    try {
-      await fs.readFile(this.path, { encoding: 'utf-8' });
-      await this.loadProducts();
-      this.#nextId = await this.getLastId();
-      return 'El archivo ya se encuentra creado';
-    } catch (error) {
-      await fs.writeFile(this.path, '[]',);
-      return 'Archivo creado con exito';
-    }
-  }
-
-  async loadProducts() {
-    try {
-      this.#products = await this.getProducts();
-    } catch (error) {
-      return error;
-    }
+    this.products.splice(productIndex, 1);
+    this.saveProducts();
+    console.log(`Producto ${id} eliminado`);
   }
 }
-
-const item = {
-  title: 'producto prueba',
-  description: 'Este es un producto prueba',
-  price: 200,
-  thumbnail: 'Sin imagen',
-  code: 'abc123',
-  stock: 25
-};
-
-const item2 = {
-  title: 'producto prueba2',
-  description: 'Este es un producto prueba2',
-  price: 150,
-  thumbnail: 'Sin imagen',
-  code: 'abc456',
-  stock: 2
-};
-
-const item3 = {
-  title: 'producto prueba3',
-  description: 'Este es un producto prueba3',
-  price: 100,
-  thumbnail: 'Sin imagen',
-  code: 'abc789',
-  stock: 3
-};
-
-const updateItem = {
-  id: 3,
-  title: 'producto actualizado',
-  description: 'Este es un producto actualizdo',
-  price: 12093810391,
-  thumbnail: 'Con Imagen',
-  code: 'ccc195',
-  stock: 25
-};
-
-
-const main = async () => {
-  const product = new ProductManager();
-  console.log(await product.createFile());
-  await product.loadProducts();
-  console.log(await product.addProduct(item));
-  console.log(await product.addProduct(item2));
-  console.log(await product.addProduct(item3));
-  console.log(await product.addProduct(item));
-  console.log(await product.deleteProductById(2));
-  console.log(await product.updateProductById(updateItem))
-
-}
-main();
